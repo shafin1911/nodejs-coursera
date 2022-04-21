@@ -8,14 +8,16 @@ var config = require('./config');
 
 const mongoose = require('mongoose');
 var FileStore = require('session-file-store')(session);
+var passport = require('passport');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 const dishRouter = require('./routes/dishRouter');
 const leaderRouter = require('./routes/leaderRouter');
 const promoRouter = require('./routes/promoRouter');
-var passport = require('passport');
-var authenticate = require('./authenticate');
+const favouriteRouter = require('./routes/favouriteRouter');
+const uploadRouter = require('./routes/uploadRouter');
 
+var authenticate = require('./authenticate');
 const Dishes = require('./models/dishes');
 
 const url = config.mongoUrl;
@@ -27,6 +29,15 @@ connect.then((db) => {
 
 var app = express();
 
+// Secure traffic only
+app.all('*', (req, res, next) => {
+  if (req.secure) {
+    return next();
+  }
+  else {
+    res.redirect(307, 'https://' + req.hostname + ':' + app.get('secPort') + req.url);
+  }
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -56,6 +67,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/dishes', dishRouter);
 app.use('/leaders', leaderRouter);
 app.use('/promotions', promoRouter);
+app.use('/favourites', favouriteRouter);
+app.use('/imageUpload',uploadRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
